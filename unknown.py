@@ -12,11 +12,11 @@ api_hash = '89e69170087045e7f080f2cf66d32799'
 phone_number = '+959667799982'
 
 # ==========================================
-# 👇 TARGET SETTINGS (မင်းပေးတဲ့ Data များ)
+# 👇 TARGET SETTINGS (Updated Link)
 # ==========================================
 # 1. Source Channel Invite Hash (Link ထဲက နောက်ဆုံးအပိုင်း)
-# Link: https://t.me/+iC83F_ayxV0xMDg5
-SOURCE_INVITE_HASH = 'iC83F_ayxV0xMDg5'
+# Link: https://t.me/+-G9aYBIM4J8xZWVh
+SOURCE_INVITE_HASH = '-G9aYBIM4J8xZWVh'
 
 # 2. Decrypt Bot Username
 DECRYPT_BOT = '@Unknownscrapperbot'
