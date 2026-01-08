@@ -5,9 +5,9 @@ import re
 # ==========================================
 # 👇 API SETTINGS
 # ==========================================
-api_id = 22009063                
-api_hash = 'fc7065f35831e39d77eccd52da1f4039' 
-phone_number = '+959769262933'
+api_id = 38370771                
+api_hash = 'c6bf6948172c59515b6545af34ec8aaf' 
+phone_number = '+959794663260'
 
 # ==========================================
 # 👇 TARGET SETTINGS (Channel ID Version)
