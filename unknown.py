@@ -19,7 +19,7 @@ SOURCE_CHANNELS = [
 ]
 
 DECRYPT_BOT = '@Unknownscrapperbot'
-DESTINATION_CHANNEL = -1003427673884
+DESTINATION_CHANNEL = -1003473556518
 
 # ==========================================
 
