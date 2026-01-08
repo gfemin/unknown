@@ -10,74 +10,117 @@ api_hash = 'c6bf6948172c59515b6545af34ec8aaf'
 phone_number = '+959794663260'
 
 # ==========================================
-# 👇 TARGET SETTINGS (Channel ID Version)
+# 👇 TARGET SETTINGS
 # ==========================================
+SOURCE_CHANNELS = [
+    -1002594842235,  # Unknown Channel
+    -1001803262016,  # Other Channel 1
+    -1002549684865   # Other Channel 2
+]
 
-# 1. Source Channel ID (Unknown Channel)
-# ⚠️ ဒီ Channel ထဲကို မင်းအကောင့် ဝင်ပြီးသားဖြစ်ရပါမယ်
-SOURCE_CHANNEL_ID = -1002594842235
-
-# 2. Decrypt Bot Username
 DECRYPT_BOT = '@Unknownscrapperbot'
-
-# 3. Destination Channel ID (မင်းရဲ့ Private Channel)
-DESTINATION_CHANNEL = -1003473556518
+DESTINATION_CHANNEL = -1003427673884
 
 # ==========================================
 
 client = TelegramClient('relay_session', api_id, api_hash)
 
+# CC Pattern (ဒီပုံစံကိုပဲ ရှာပြီး ဆွဲထုတ်မယ်)
+cc_pattern = r'(\d{15,16}\|\d{1,2}\|\d{2,4}\|\d{3,4})'
+# Duplicate စစ်ဖို့ ကဒ်နံပါတ် Pattern
+card_num_pattern = r'(\d{15,16})'
+
+# 🔥 Memory for Anti-Duplicate
+seen_cards = set()
+
+async def load_history():
+    print("⏳ Loading history to prevent duplicates...")
+    count = 0
+    async for msg in client.iter_messages(DESTINATION_CHANNEL, limit=500):
+        if msg.text:
+            match = re.search(card_num_pattern, msg.text)
+            if match:
+                seen_cards.add(match.group(1))
+                count += 1
+    print(f"✅ Loaded {count} existing cards into memory!")
+
 async def main():
     await client.start(phone=phone_number)
-    print("🤖 Bot Started (ID Mode)...")
-    print(f"👀 Watching Source ID: {SOURCE_CHANNEL_ID}")
-    print(f"wd Sending to Bot: {DECRYPT_BOT}")
-    print(f"📂 Forwarding to Your Channel: {DESTINATION_CHANNEL}")
+    await load_history()
+    
+    print("🤖 Clean Forwarder Started...")
+    print(f"👀 Watching {len(SOURCE_CHANNELS)} Channels")
+    print(f"📂 Forwarding CLEAN CCs to: {DESTINATION_CHANNEL}")
 
     # -------------------------------------------------------
-    # EVENT 1: Channel ID ကနေ AES ကုဒ်တွေကို ဖမ်းမယ်
+    # EVENT 1: Source Channel Handling
     # -------------------------------------------------------
-    @client.on(events.NewMessage(chats=SOURCE_CHANNEL_ID))
-    async def aes_handler(event):
+    @client.on(events.NewMessage(chats=SOURCE_CHANNELS))
+    async def source_handler(event):
         text = event.message.text or ""
         
-        # /decrypt AES_ နဲ့စတဲ့ စာကြောင်းကို ရှာမယ်
+        # 🟢 CASE 1: AES Encrypted -> Bot ဆီပို့
         if "/decrypt AES_" in text:
-            # Regex နဲ့ AES ကုဒ်ကို သေချာပြန်ဆွဲထုတ်မယ်
             match = re.search(r'(/decrypt AES_[a-zA-Z0-9\-\_\=\+]+)', text)
-            
             if match:
                 final_command = match.group(1)
-                print(f"📥 Found AES! Sending to Bot...")
-                
+                print(f"🔐 Found AES! Sending to Bot...")
                 try:
                     await client.send_message(DECRYPT_BOT, final_command)
-                    # Bot ပိတ်မသွားအောင် 4 စက္ကန့် စောင့်မယ်
                     await asyncio.sleep(4) 
+                except: pass
+
+        # 🟢 CASE 2: Plain CC -> သန့်ရှင်းရေးလုပ်ပြီး ပို့မယ်
+        elif re.search(cc_pattern, text):
+            # CC အပြည့်အစုံကို ဆွဲထုတ်မယ် (စာတွေမပါတော့ဘူး)
+            clean_match = re.search(cc_pattern, text)
+            if clean_match:
+                clean_cc = clean_match.group(1) # cc|mm|yy|cvc သက်သက်
+                cc_num = clean_cc.split('|')[0]
+
+                if cc_num in seen_cards:
+                    print(f"⚠️ Ignored Duplicate CC: {cc_num}")
+                    return
+
+                print(f"💳 Clean CC Found! Forwarding...")
+                seen_cards.add(cc_num)
+                try:
+                    # 'text' အစား 'clean_cc' ကို ပို့လိုက်ပြီ
+                    await client.send_message(DESTINATION_CHANNEL, clean_cc)
                 except Exception as e:
-                    print(f"❌ Error sending to bot: {e}")
+                    print(f"❌ Error forwarding: {e}")
 
     # -------------------------------------------------------
-    # EVENT 2: Bot ကပြန်ပို့တဲ့ အဖြေကို Private Channel ထဲပို့မယ်
+    # EVENT 2: Bot Reply Handling (အရေးကြီးဆုံးအပိုင်း) 🔥
     # -------------------------------------------------------
     @client.on(events.NewMessage(chats=DECRYPT_BOT))
     async def bot_reply_handler(event):
-        # ကိုယ်ပို့လိုက်တဲ့ message မဟုတ်ဘဲ bot reply ဖြစ်မှယူမယ်
         me = await client.get_me()
-        if event.sender_id == me.id:
-            return
+        if event.sender_id == me.id: return
 
         text = event.message.text or ""
         
-        # ကဒ်ပုံစံ (ဂဏန်း ၁၅ လုံးအထက်) ပါမှ Private Channel ထဲပို့မယ်
-        if re.search(r'\d{15,16}', text):
-            print(f"✅ Decrypted! Forwarding to Private Channel...")
+        # Bot ကပို့လိုက်တဲ့ စာထဲက CC ကိုပဲ ရွေးထုတ်မယ်
+        clean_match = re.search(cc_pattern, text)
+        
+        if clean_match:
+            clean_cc = clean_match.group(1) # ဒါက cc|mm|yy|cvc သက်သက်ပဲရမယ်
+            cc_num = clean_cc.split('|')[0]
+
+            # ⚠️ DUPLICATE CHECK
+            if cc_num in seen_cards:
+                print(f"⚠️ Ignored Duplicate from Bot: {cc_num}")
+                return
+
+            print(f"✅ Decrypted & Cleaned! Forwarding...")
+            seen_cards.add(cc_num)
             try:
-                await client.send_message(DESTINATION_CHANNEL, text)
+                # ရှင်းထားတဲ့ ကဒ်ကိုပဲ ပို့မယ် (ရှုပ်တာတွေမပါတော့ဘူး)
+                await client.send_message(DESTINATION_CHANNEL, clean_cc)
             except Exception as e:
                 print(f"❌ Error forwarding: {e}")
 
-    print("🚀 System is Running... Waiting for new AES codes.")
+    print("🚀 System is Running...")
     await client.run_until_disconnected()
 
 if __name__ == '__main__':
