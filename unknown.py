@@ -21,7 +21,7 @@ SOURCE_CHANNEL_ID = -1002594842235
 DECRYPT_BOT = '@Unknownscrapperbot'
 
 # 3. Destination Channel ID (မင်းရဲ့ Private Channel)
-DESTINATION_CHANNEL = -1003427673884
+DESTINATION_CHANNEL = -1003473556518
 
 # ==========================================
 
