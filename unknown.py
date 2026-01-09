@@ -21,8 +21,7 @@ SOURCE_CHANNELS = [
 DECRYPT_BOT = '@Unknownscrapperbot'
 DESTINATION_CHANNEL = -1003473556518
 
-# 🔥 မင်းစစ်ချင်တဲ့ Checker Bot Username ကို ဒီမှာထည့်ပါ
-CHECKER_BOT = '@Genius11Ck_Bot' 
+# (Checker Bot setting ကို ဖျက်လိုက်ပါပြီ)
 
 # ==========================================
 
@@ -56,7 +55,7 @@ async def main():
     print("🤖 Super Forwarder Started...")
     print(f"👀 Watching: {len(SOURCE_CHANNELS)} Channels")
     print(f"📂 Save to: {DESTINATION_CHANNEL}")
-    print(f"⚡ Check with: {CHECKER_BOT}")
+    print("❌ Checker Bot: DISABLED")
 
     # -------------------------------------------------------
     # EVENT 1: Source Channel Handling
@@ -73,10 +72,11 @@ async def main():
                 print(f"🔐 Found AES! Sending to Decrypt Bot...")
                 try:
                     await client.send_message(DECRYPT_BOT, final_command)
+                    # Decrypt Bot က Reply ပြန်ဖို့ အချိန်ခဏစောင့်ပေးတာ (မဖြုတ်ရ)
                     await asyncio.sleep(4) 
                 except: pass
 
-        # 🟢 CASE 2: Plain CC -> Channel ပို့ + Bot ပို့
+        # 🟢 CASE 2: Plain CC -> Channel ကိုပဲ ပို့မယ် (Checker မပို့တော့ဘူး)
         elif re.search(cc_pattern, text):
             clean_match = re.search(cc_pattern, text)
             if clean_match:
@@ -87,20 +87,13 @@ async def main():
                     print(f"⚠️ Ignored Duplicate CC: {cc_num}")
                     return
 
-                print(f"💳 New CC Found! Processing...")
+                print(f"💳 New CC Found! Saving to Channel...")
                 seen_cards.add(cc_num)
                 
                 try:
-                    # 1. Private Channel ကို အရင်ပို့မယ်
+                    # 🔥 Only Save to Destination Channel
                     await client.send_message(DESTINATION_CHANNEL, clean_cc)
-                    print(f"✅ Saved to Channel")
-                    
-                    # 2. Delay နည်းနည်းခံမယ်
-                    await asyncio.sleep(2) 
-                    
-                    # 3. Checker Bot ကို /mt နဲ့ပို့မယ်
-                    await client.send_message(CHECKER_BOT, f"/mt {clean_cc}")
-                    print(f"🚀 Sent to Checker: /mt {clean_cc}")
+                    print(f"✅ Saved: {clean_cc}")
 
                 except Exception as e:
                     print(f"❌ Error forwarding: {e}")
@@ -124,20 +117,13 @@ async def main():
                 print(f"⚠️ Ignored Duplicate from Decrypt Bot: {cc_num}")
                 return
 
-            print(f"✅ Decrypted! Processing...")
+            print(f"✅ Decrypted! Saving to Channel...")
             seen_cards.add(cc_num)
             
             try:
-                # 1. Private Channel ကို အရင်ပို့မယ်
+                # 🔥 Only Save to Destination Channel
                 await client.send_message(DESTINATION_CHANNEL, clean_cc)
-                print(f"✅ Saved to Channel")
-                
-                # 2. Delay နည်းနည်းခံမယ်
-                await asyncio.sleep(2)
-                
-                # 3. Checker Bot ကို /mt နဲ့ပို့မယ်
-                await client.send_message(CHECKER_BOT, f"/mt {clean_cc}")
-                print(f"🚀 Sent to Checker: /mt {clean_cc}")
+                print(f"✅ Saved: {clean_cc}")
 
             except Exception as e:
                 print(f"❌ Error forwarding: {e}")
